@@ -19,7 +19,13 @@ process.env.BOT_RUNNING = true;
 const bot = new Telegraf(process.env.TELEGRAM_TOKKEN);
 
 // URL base do backend (Render)
-const BASE_URL = "https://pupinhos-bot.onrender.com";
+const BASE_URL = "https://pupinhos-bot.onrender.com/api";
+
+// Configuração padrão do Axios
+const api = axios.create({
+  baseURL: BASE_URL,
+  timeout: 10000, // 10 segundos
+});
 
 // Evita processar duplicações
 const usuariosEmProcessamento = new Map();
@@ -41,7 +47,7 @@ async function salvarTransacaoNoBackend(dados, user) {
       nome_usuario: user.first_name,
     };
 
-    const response = await axios.post(`${BASE_URL}/add-transactions`, novaTransacao);
+    const response = await api.post("/add-transactions", novaTransacao);
     console.log("✅ Transação salva no backend:", response.data);
     return [true, "Transação registrada com sucesso no servidor!"];
   } catch (error) {
@@ -52,7 +58,7 @@ async function salvarTransacaoNoBackend(dados, user) {
 
 async function listarTransacoesDoUsuario(telegramId) {
   try {
-    const response = await axios.get(`${BASE_URL}/transactions`, {
+    const response = await api.get("/transactions", {
       params: { telegram_id: telegramId },
     });
 
@@ -147,6 +153,14 @@ bot.on(message("text"), async (ctx) => {
 bot.launch();
 console.log("🤖 Bot conectado e rodando...");
 
-// Habilita parada segura (Koyeb, Render, Railway, etc.)
+// Habilita parada segura (Render, Railway, etc.)
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+// Tratamento global de erros
+process.on("unhandledRejection", (err) => {
+  console.error("💥 Unhandled rejection:", err);
+});
+process.on("uncaughtException", (err) => {
+  console.error("💥 Uncaught exception:", err);
+});

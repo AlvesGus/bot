@@ -19,7 +19,7 @@ process.env.BOT_RUNNING = true;
 const bot = new Telegraf(process.env.TELEGRAM_TOKKEN);
 
 // URL base do backend (Render)
-const BASE_URL = "https://pupinhos-bot.onrender.com/api";
+const BASE_URL = "https://pupinhos-bot.onrender.com";
 
 // Evita processar duplicações
 const usuariosEmProcessamento = new Map();

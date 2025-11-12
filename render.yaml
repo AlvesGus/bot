@@ -1,0 +1,30 @@
+services:
+  - name: finance-backend
+    type: web
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: 3000
+
+  - name: finance-bot
+    type: worker
+    runtime: node
+    rootDir: bot
+    buildCommand: npm install
+    startCommand: node src/bot.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_TOKKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BACKEND_URL
+        value: https://pupinhos-bot.onrender.com

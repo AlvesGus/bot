@@ -1,39 +1,34 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const { message } = require("telegraf/filters");
-const axios = require("axios");
+const axios = require("axios")
 const { interactWithGemini } = require("./gemini/");
 
 // ===============================
 // ⚙️ CONFIGURAÇÃO INICIAL
 // ===============================
 
-// Evita rodar múltiplas instâncias do bot
 if (process.env.BOT_RUNNING) {
   console.log("⚠️ Bot já está rodando — encerrando duplicata");
   process.exit(0);
 }
 process.env.BOT_RUNNING = true;
 
-// Inicializa o bot
 const bot = new Telegraf(process.env.TELEGRAM_TOKKEN);
 
-// URL base do backend (Render)
-const BASE_URL = "https://pupinhos-bot.onrender.com/api";
 
-// Configuração padrão do Axios
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 10000, // 10 segundos
-});
 
-// Evita processar duplicações
+
 const usuariosEmProcessamento = new Map();
 let ultimoUpdateId = null;
 
 // ===============================
 // 🚀 FUNÇÕES AUXILIARES
 // ===============================
+const api = axios.create({
+  baseURL: process.env.BASE_URL,
+  timeout: 5000,
+});
 
 async function salvarTransacaoNoBackend(dados, user) {
   try {
@@ -43,11 +38,12 @@ async function salvarTransacaoNoBackend(dados, user) {
       tipoCategoria: dados.tipo || "Não especificado",
       local: dados.local,
       data: dados.data,
-      telegram_id: user.id,
+      telegram_id: user.id.toString(),
       nome_usuario: user.first_name,
     };
 
-    const response = await api.post("/add-transactions", novaTransacao);
+    console.log("🚀 CONECTANDO AO BACKEND EM:", process.env.BASE_URL);
+    const response = await api.post(`/api/add-transactions`, novaTransacao);
     console.log("✅ Transação salva no backend:", response.data);
     return [true, "Transação registrada com sucesso no servidor!"];
   } catch (error) {
@@ -146,14 +142,10 @@ bot.on(message("text"), async (ctx) => {
   }
 });
 
-// ===============================
-// 🚀 INICIALIZAÇÃO DO BOT
-// ===============================
-
 bot.launch();
 console.log("🤖 Bot conectado e rodando...");
 
-// Habilita parada segura (Render, Railway, etc.)
+
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 

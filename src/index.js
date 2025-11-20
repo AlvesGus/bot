@@ -32,15 +32,15 @@ const api = axios.create({
 
 async function salvarTransacaoNoBackend(dados, user) {
   try {
-    const novaTransacao = {
-      category: dados.tMovimentacao,
-      amount: parseFloat(dados.valorMovimentacao),
-      type: dados.tipo || "Não especificado",
+   const body = {
       title: dados.local,
-      telegram_id: user.id.toString(),
-      nome_usuario: user.first_name,
+      amount: Number(dados.valorMovimentacao),
+      type: dados.tipo,
+      category: dados.tMovimentacao,
+      telegram_id: String(user.id),
+      name_user: user.first_name,
     };
-
+    
     console.log("🚀 CONECTANDO AO BACKEND EM:", process.env.BASE_URL);
     const response = await api.post(`/api/add-transactions`, novaTransacao);
     console.log("✅ Transação salva no backend:", response.data);

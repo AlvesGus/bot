@@ -33,11 +33,10 @@ const api = axios.create({
 async function salvarTransacaoNoBackend(dados, user) {
   try {
     const novaTransacao = {
-      tipo: dados.tMovimentacao,
-      valor: parseFloat(dados.valorMovimentacao),
-      tipoCategoria: dados.tipo || "Não especificado",
-      local: dados.local,
-      data: dados.data,
+      category: dados.tMovimentacao,
+      amount: parseFloat(dados.valorMovimentacao),
+      type: dados.tipo || "Não especificado",
+      title: dados.local,
       telegram_id: user.id.toString(),
       nome_usuario: user.first_name,
     };

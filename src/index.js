@@ -31,6 +31,7 @@ const api = axios.create({
 });
 
 async function salvarTransacaoNoBackend(dados, user) {
+
   try {
    const body = {
       title: dados.local,
@@ -38,22 +39,23 @@ async function salvarTransacaoNoBackend(dados, user) {
       type: dados.tipo,
       category: dados.tMovimentacao,
       telegram_id: String(user.id),
-      name_user: user.first_name,
+      name_user: user.first_name
     };
     
     console.log("🚀 CONECTANDO AO BACKEND EM:", process.env.BASE_URL);
-    const response = await api.post(`/api/add-transactions`, novaTransacao);
+    console.log(body)
+    const response = await api.post(`/api/add-transaction`, body);
     console.log("✅ Transação salva no backend:", response.data);
     return [true, "Transação registrada com sucesso no servidor!"];
-  } catch (error) {
-    console.error("❌ Erro ao salvar no backend:", error.response?.data || error.message);
-    return [false, "Erro ao salvar a transação no servidor."];
-  }
+  }  catch (error) {
+  console.error("❌ Erro ao salvar no backend:", error.response?.data || error.message);
+  return [false, "Erro ao salvar a transação no servidor."];
+
 }
 
 async function listarTransacoesDoUsuario(telegramId) {
   try {
-    const response = await api.get("/transactions", {
+    const response = await api.get("/api/transactions", {
       params: { telegram_id: telegramId },
     });
 
@@ -70,6 +72,7 @@ async function listarTransacoesDoUsuario(telegramId) {
     console.error("Erro ao buscar transações:", error.message);
     return "⚠️ Não consegui recuperar suas transações.";
   }
+}
 }
 
 // ===============================

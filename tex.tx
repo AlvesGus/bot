@@ -1,0 +1,13 @@
+ if (!response.data || response.data.length === 0) {
+      return "📭 Nenhuma transação encontrada.";
+    }
+
+    let texto = "📋 *Suas últimas transações:*\n\n";
+    response.data.forEach((t) => {
+      texto += `💸 ${t.title} — R$${t.valor}\n🏷️ ${t.tipoCategoria}\n📍 ${t.local}\n📅 ${t.data}\n\n`;
+    });
+    return texto;
+  } catch (error) {
+    console.error("Erro ao buscar transações:", error.message);
+    return "⚠️ Não consegui recuperar suas transações.";
+  }

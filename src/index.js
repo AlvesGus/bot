@@ -1,8 +1,12 @@
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const { message } = require("telegraf/filters");
-const axios = require("axios")
+const axios = require("axios");
 const { interactWithGemini } = require("./gemini/");
+
+function escapeMarkdown(text) {
+  return String(text).replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
+}
 
 // ===============================
 // ⚙️ CONFIGURAÇÃO INICIAL
@@ -16,9 +20,6 @@ process.env.BOT_RUNNING = true;
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKKEN);
 
-
-
-
 const usuariosEmProcessamento = new Map();
 let ultimoUpdateId = null;
 
@@ -31,48 +32,67 @@ const api = axios.create({
 });
 
 async function salvarTransacaoNoBackend(dados, user) {
-
   try {
-   const body = {
+    const body = {
       title: dados.local,
       amount: Number(dados.valorMovimentacao),
       type: dados.tipo,
       category: dados.tMovimentacao,
       telegram_id: String(user.id),
-      name_user: user.first_name
+      name_user: user.first_name,
     };
-    
+
     console.log("🚀 CONECTANDO AO BACKEND EM:", process.env.BASE_URL);
-    console.log(body)
+    console.log(body);
     const response = await api.post(`/api/add-transaction`, body);
     console.log("✅ Transação salva no backend:", response.data);
-    return [true, "Transação registrada com sucesso no servidor!"];
-  }  catch (error) {
-  console.error("❌ Erro ao salvar no backend:", error.response?.data || error.message);
-  return [false, "Erro ao salvar a transação no servidor."];
-
+    return [true, "Transação cadastrada com sucesso!"];
+  } catch (error) {
+    console.error(
+      "❌ Erro ao salvar no backend:",
+      error.response?.data || error.message
+    );
+    return [false, "Erro ao salvar ao cadastrar nova transação."];
+  }
 }
 
-async function listarTransacoesDoUsuario(telegramId) {
+async function listarTransacoesDoUsuario(telegram_id) {
   try {
     const response = await api.get("/api/transactions", {
-      params: { telegram_id: telegramId },
+      params: { telegram_id: String(telegram_id) },
     });
 
-    if (!response.data || response.data.length === 0) {
+    const lista = response.data;
+
+    if (!lista || lista.length === 0) {
       return "📭 Nenhuma transação encontrada.";
     }
 
-    let texto = "📋 *Suas últimas transações:*\n\n";
-    response.data.forEach((t) => {
-      texto += `💸 ${t.tipo} — R$${t.valor.toFixed(2)}\n🏷️ ${t.tipoCategoria}\n📍 ${t.local}\n📅 ${t.data}\n\n`;
+    // 🔥 Pega só os 5 primeiros (mais recentes)
+    const ultimas5 = lista.slice(0, 5);
+
+    let texto = "🧾 *Suas Últimas 5 Transações*\n\n";
+
+    ultimas5.forEach((t) => {
+      const data = new Date(t.createdAt).toLocaleDateString("pt-BR");
+      const valor = t.amount.toFixed(2);
+
+      texto += `📅 *${escapeMarkdown(data)}*\n`;
+      texto += `✔ ${escapeMarkdown(t.title)}\n`;
+      texto += `💰 *R$ ${valor}*\n`;
+      texto += `🏷 *${escapeMarkdown(t.category)}*\n`;
+      texto += `📍 *${escapeMarkdown(t.type)}*\n`;
+      texto += `👤 ${t.name_user}\n\n`;
     });
+
     return texto;
   } catch (error) {
-    console.error("Erro ao buscar transações:", error.message);
-    return "⚠️ Não consegui recuperar suas transações.";
+    console.error(
+      "❌ Erro ao buscar transações:",
+      error.response?.data || error.message
+    );
+    return "Erro ao buscar suas transações.";
   }
-}
 }
 
 // ===============================
@@ -87,10 +107,18 @@ bot.start(async (ctx) => {
   });
 });
 
-bot.command("minhastransacoes", async (ctx) => {
-  await ctx.reply("🔎 Buscando suas transações...");
-  const texto = await listarTransacoesDoUsuario(ctx.from.id);
-  await ctx.reply(texto, { parse_mode: "Markdown" });
+bot.command("gastos", async (ctx) => {
+  try {
+    await ctx.reply("🔎 Buscando suas transações...");
+
+    const texto = await listarTransacoesDoUsuario(ctx.from.id);
+
+    const textoSeguro = escapeMarkdown(texto);
+
+    await ctx.reply(textoSeguro, { parse_mode: "MarkdownV2" });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 // ===============================
@@ -110,7 +138,9 @@ bot.on(message("text"), async (ctx) => {
 
   // Evita que o mesmo usuário envie várias mensagens simultâneas
   if (usuariosEmProcessamento.get(userId)) {
-    await ctx.reply("⏳ Aguarde, ainda estou processando sua última transação...");
+    await ctx.reply(
+      "⏳ Aguarde, ainda estou processando sua última transação..."
+    );
     return;
   }
 
@@ -146,7 +176,6 @@ bot.on(message("text"), async (ctx) => {
 
 bot.launch();
 console.log("🤖 Bot conectado e rodando...");
-
 
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));

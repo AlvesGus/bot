@@ -29,6 +29,11 @@ let ultimoUpdateId = null;
 const api = axios.create({
   baseURL: process.env.BASE_URL,
   timeout: 5000,
+  headers: {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0", // obrigatório para evitar bloqueio da Vercel
+    "Accept": "application/json",
+  }
 });
 
 async function salvarTransacaoNoBackend(dados, user) {

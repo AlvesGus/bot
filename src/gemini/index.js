@@ -1,6 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Suporte a múltiplas chaves Gemini (caso você tenha várias)
 const GEMINI_KEYS = [
   process.env.GEMINI_API_KEY_1,
   process.env.GEMINI_API_KEY_2,
@@ -23,7 +22,7 @@ async function interactWithGemini(userText) {
   while (attempts < GEMINI_KEYS.length) {
     const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash", // ✅ modelo correto e atualizado
+      model: "gemini-2.5-flash",
     });
 
     try {
@@ -37,43 +36,46 @@ async function interactWithGemini(userText) {
         "tipo": "categoria (alimentação, lazer, transporte, etc)"
       }
 
-      Exemplo de entrada: "Gastei 80 reais no posto hoje"
-      Resposta esperada:
-      {
-        "tMovimentacao": "Gasto",
-        "valorMovimentacao": 80,
-        "local": "posto",
-        "data": "09/11/2025",
-        "tipo": "Transporte"
-      }
-
       Frase: "${userText}"
       `;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      // 🔥 IMPLEMENTAÇÃO CORRETA PARA MODELOS 2.5
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+      });
+
+      const text =
+        result.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
 
-      console.log(jsonMatch)
       return { erro: true, mensagem: "Formato inesperado da resposta do Gemini." };
 
     } catch (error) {
       console.error(`❌ Erro com chave ${currentKeyIndex + 1}:`, error.message);
 
-      if (error.message.includes("429") || error.message.includes("quota") || error.message.includes("Resource exhausted")) {
+      if (
+        error.message.includes("429") ||
+        error.message.includes("quota") ||
+        error.message.includes("Resource exhausted")
+      ) {
         console.log("⚠️ Limite atingido, trocando para próxima chave...");
         currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS.length;
         attempts++;
-        await new Promise((r) => setTimeout(r, 2000)); // espera 2s antes de tentar novamente
+        await new Promise((r) => setTimeout(r, 2000));
       } else if (error.message.includes("404")) {
-        console.log("❌ Modelo não encontrado. Verifique o nome no painel da Google AI Studio.");
+        console.log("❌ Modelo não encontrado.");
         break;
       } else if (error.message.includes("expired")) {
-        console.log("🔑 Chave expirada. Pule para a próxima.");
+        console.log("🔑 Chave expirada. Pulando...");
         currentKeyIndex = (currentKeyIndex + 1) % GEMINI_KEYS.length;
         attempts++;
       } else {

@@ -2,7 +2,10 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const { message } = require("telegraf/filters");
 const axios = require("axios");
-const { interactWithGemini } = require("./gemini/");
+const interpretarTransacao = require('./services/generate')
+
+
+
 
 function escapeMarkdown(text) {
   return String(text).replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, "\\$1");
@@ -153,7 +156,7 @@ bot.on(message("text"), async (ctx) => {
   await ctx.reply("💭 Entendendo sua mensagem...");
 
   try {
-    const dados = await interactWithGemini(text);
+    const dados = await interpretarTransacao(text);
 
     if (
       !dados ||

@@ -2,7 +2,8 @@
 // 🤖 Gemini → Groq (fallback free)
 // ===============================
 
-import Groq from "groq-sdk";
+const Groq = require('groq-sdk')
+
 import { interactWithGemini } from "../gemini/index.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -74,7 +75,7 @@ async function tentaGroq(texto) {
 // -----------------------------
 // FUNÇÃO PRINCIPAL
 // -----------------------------
-export async function interpretarTransacao(texto) {
+ async function interpretarTransacao(texto) {
   let resposta = await tentaGemini(texto);
   if (resposta) return resposta;
 
@@ -83,3 +84,6 @@ export async function interpretarTransacao(texto) {
 
   return null;
 }
+
+
+module.exports = interpretarTransacao

@@ -4,7 +4,7 @@
 
 const Groq = require('groq-sdk')
 
-import { interactWithGemini } from "../gemini/index.js";
+const interactWithGemini = require("../gemini/index.js")
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 

@@ -29,7 +29,7 @@ async function interactWithGemini(userText) {
       const prompt = `
       Analise a frase abaixo e retorne apenas um JSON com as seguintes informações:
       {
-        "tMovimentacao": "Gasto" | "Receita" | "Transferência",
+        "tMovimentacao": "Entrada" | "Saida" | "Investimento",
         "valorMovimentacao": número,
         "local": "onde ocorreu",
         "data": "DD/MM/YYYY",

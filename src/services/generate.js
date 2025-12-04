@@ -10,11 +10,11 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const promptBase = (texto) => `
 Analise a frase abaixo e retorne APENAS um JSON puro no formato:
 {
-  "tMovimentacao": "Gasto" | "Receita" | "Transferência",
+  "tMovimentacao": "Entrada" | "Saida" | "Investimento",
   "valorMovimentacao": número,
   "local": "onde ocorreu",
   "data": "DD/MM/YYYY",
-  "tipo": "categoria (alimentação, lazer, transporte, etc)"
+  "tipo": "Alimentação" | "Transporte" | "Lazer" | "Outros"
 }
 
 Frase: "${texto}"
